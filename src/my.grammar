@@ -1,0 +1,24 @@
+@top Program { QueryRule }
+
+QueryRule { LSide "{" rules "}" }
+LSide { IdWithExclusion }
+IdWithExclusion { (ExclusionOp)? Identifier }
+rules { rule ("," rule)* }
+rule { QueryRule|SimpleRule|GroupRule}
+GroupRule {(And|Or) ":" "{" rules "}"}
+SimpleRule { Identifier Operator (Number|String)}
+Or {@specialize<Identifier, "or">}
+And {@specialize<Identifier, "and">}
+
+@skip { space }
+
+@tokens {
+    space { @whitespace+ }
+    Operator { (">"|"="|"<") }
+    ExclusionOp { "~" }
+    Identifier { $[A-Za-z_]+ }
+    Number { $[0-9]+ }
+    String { '"' !["]* '"' }
+}
+
+@external propSource highlighting from "./highlight.js"
