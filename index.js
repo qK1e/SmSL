@@ -5,7 +5,7 @@ import { keymap } from '@codemirror/view'
 import TreeVisualizer from "./src/Visualisation/TreeVisualizer"
 
 let ev = new EditorView({
-  doc: "clients {\n\t\n}",
+  doc: "",
   extensions: [
     basicSetup, 
     smsl(),

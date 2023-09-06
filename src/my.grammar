@@ -1,22 +1,26 @@
 @top Program { QueryRule }
 
-QueryRule { LSide "{" rules "}" }
-LSide { IdWithExclusion }
-IdWithExclusion { (ExclusionOp)? Identifier }
-rules { rule ("," rule)* }
+QueryRule { Query ( "|" list<Func, "|"> Operator (Number|String))?}
+Query { LSide "{" list<rule, ","> "}" }
+LSide { list<(Id|Func), "."> }
+Id { (ExclusionOp)? Name }
+Func { Name "(" OptParams ")" }
+OptParams { list<Param, ",">? }
+Param { String|Number }
 rule { QueryRule|SimpleRule|GroupRule}
-GroupRule {(And|Or) ":" "{" rules "}"}
-SimpleRule { Identifier Operator (Number|String)}
-Or {@specialize<Identifier, "or">}
-And {@specialize<Identifier, "and">}
+GroupRule {(And|Or) ":" "{" list<rule, ","> "}"}
+SimpleRule { LSide Operator (Number|String)}
+Or {@specialize<Name, "or">}
+And {@specialize<Name, "and">}
+list<token, separator> { token (separator token)* }
 
 @skip { space }
 
 @tokens {
     space { @whitespace+ }
-    Operator { (">"|"="|"<") }
+    Operator { (">"|"="|"<"|"<="|">="|"!=") }
     ExclusionOp { "~" }
-    Identifier { $[A-Za-z_]+ }
+    Name { $[A-Za-z_]+ }
     Number { $[0-9]+ }
     String { '"' !["]* '"' }
 }

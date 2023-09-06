@@ -1,6 +1,6 @@
 import {LRLanguage} from "@codemirror/language"
 import {parser} from "./parser.js"
-import autocompletion from './autocompletion'
+import autocompletion from './Autocompletion/autocompletion'
 import {LanguageSupport, indentNodeProp, delimitedIndent} from "@codemirror/language"
 
 export const exampleLanguage = LRLanguage.define({
