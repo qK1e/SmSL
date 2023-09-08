@@ -1,23 +1,71 @@
-import {LRLanguage} from "@codemirror/language"
 import {parser} from "./parser.js"
 import autocompletion from './Autocompletion/autocompletion'
-import {LanguageSupport, indentNodeProp, delimitedIndent} from "@codemirror/language"
+import {LanguageSupport, LRLanguage, indentNodeProp, delimitedIndent} from "@codemirror/language"
 
-export const exampleLanguage = LRLanguage.define({
+let symbolTable = {
+  clients: {
+    full_name: "string",
+    first_name: "string",
+    middle_name: "string",
+    last_name: "string",
+    age: "number",
+    city: "string",
+    orders: {
+      status: "string",
+      items: {
+        quantity: "number",
+        product: {
+          category: {
+            identifier: "string",
+            name: "string"
+          },
+          price: "number",
+          name: "string"
+        }
+      }
+    },
+    contacts: {
+      type: "string",
+      value: "string",
+      validation_code: "number",
+      validation_date: "datetime"
+    },
+    communications: {
+      type: "string",
+      events: {
+        type: "string",
+        date: "datetime"
+      },
+      id: "number"
+    },
+    channels: {
+      type: "string",
+      subscribed: "boolean"
+    },
+    mailing_categories: {
+      name: "string",
+      subscribed: "boolean"
+    }
+  }
+}
+
+export const language = LRLanguage.define({
     parser: parser.configure({
       props: [
         indentNodeProp.add({
-          Query: delimitedIndent({closing: "}"})
+          Query: delimitedIndent({closing: "}"}),
+          GroupRule: delimitedIndent({closing: "}"})
         })
       ]
     }),
     languageData: {
-      autocomplete: autocompletion
+      autocomplete: autocompletion,
+      symbolTable: symbolTable
     }
 })
 
-export let languageSupport = new LanguageSupport(exampleLanguage);
+export let languageSupport = new LanguageSupport(language);
 
 export let smsl = () => {
-  return new LanguageSupport(exampleLanguage);
+  return new LanguageSupport(language);
 }

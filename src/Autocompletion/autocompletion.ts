@@ -2,42 +2,21 @@ import { CompletionContext, CompletionResult, Completion, insertCompletionText }
 import { Tree } from '@lezer/common';
 import * as terms from '../parser.terms';
 import { EditorView } from 'codemirror';
-import { EditorSelection, SelectionRange } from '@codemirror/state';
+import { EditorSelection } from '@codemirror/state';
+import ProgramNodeSource from './Sources/ProgramNodeSource';
+import IdNodeSource from './Sources/IdNodeSource';
+
+const sources = [
+    new ProgramNodeSource(),
+    new IdNodeSource()
+]
 
 export default function autocomplete(context: CompletionContext) {
-    let options: Completion[] = [];
+    console.log(context.state.tree.resolve(context.pos).node.name)
 
-    const tree: Tree = context.state.tree;
-    const node = tree.resolve(context.pos);
-
-    if ( node.type.id === terms.Program) {
-        const text = context.state.doc.toString().trim();
-
-        if (text.length !== 0 && !'clients'.startsWith(text)) {
-            return;
+    for (const source of sources) {
+        if ( source.match(context) ) {
+            return source.getCompletionResult(context);
         }
-
-        options = [
-            {
-                label: 'clients', 
-                apply: ( view: EditorView, completion: Completion, from: number, to: number) => {
-                    console.log('hello')
-                    
-                    const insertion = 'clients {\n\t\n}';
-
-                    const transactionSpec = insertCompletionText(view.state, insertion, 0, view.state.doc.length);
-                    transactionSpec.selection = EditorSelection.cursor(insertion.indexOf('\t') + 1);
-
-                    view.dispatch( view.state.update( transactionSpec ) );
-                }
-            }
-        ]
     }
-
-    let result: CompletionResult = {
-        from: context.pos,
-        options: options
-    }
-
-    return result;
 }
