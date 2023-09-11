@@ -1,5 +1,5 @@
 import NodeSource from "./NodeSource";
-import { CompletionContext, CompletionResult } from "@codemirror/autocomplete";
+import { CompletionContext, CompletionResult, Completion } from "@codemirror/autocomplete";
 import { SyntaxNode, TreeCursor } from '@lezer/common';
 import { Query, Func, Id } from "../../parser.terms";
 
@@ -10,7 +10,7 @@ export default class IdNodeSource extends NodeSource {
     public getCompletionResult(context: CompletionContext): CompletionResult {
         this.context = context;
 
-        const candidates: string[] = this.getAutocompletions(context);
+        const candidates = this.getAutocompletions(context);
 
         if (!candidates) {
             return {
@@ -19,14 +19,17 @@ export default class IdNodeSource extends NodeSource {
             };
         }
         
-        const options: string[] = [];
+        const options: Completion[] = [];
         for (let candidate of candidates) {
             options.push({
                 label: candidate
             });
         }
 
-        let length = context.state.wordAt(context.pos)?.to - context.state.wordAt(context.pos)?.from;
+        const word = context.state.wordAt(context.pos);
+        const length = word 
+            ? word.to - word.from 
+            : 0;
 
         return {
             from: context.pos - length,
@@ -50,15 +53,13 @@ export default class IdNodeSource extends NodeSource {
             }
         }
 
-        console.log(path);
+        let tables: Object = this.getSymbolTable(context);
 
-        //find autocompletion in table for given path
-        let tables: Object = context.state.languageDataAt("symbolTable")[0];
-        let unfinished: string = path.pop();
+        let unfinished: string = path.pop() || "";
 
         for (let id of path) {
             if (! tables.hasOwnProperty(id)) {
-                return;
+                return [];
             }
 
             tables = tables[id];
@@ -69,6 +70,16 @@ export default class IdNodeSource extends NodeSource {
         return candidates.filter((candidate: string) => {
             return candidate.startsWith(unfinished);
         });
+    }
+
+    private getSymbolTable(context: CompletionContext): Object {
+        const table = context.state.languageDataAt("symbolTable", 0)[0];
+
+        if (!table || typeof table != "object") {
+            return {}
+        }
+
+        return table;
     }
 
     private getLSidePath(node: SyntaxNode): string[] {
@@ -85,19 +96,23 @@ export default class IdNodeSource extends NodeSource {
             path.push( this.getLSideItemName(cursor.node) );
         }
 
-        console.log(path);
-
         return path;
     }
 
     private getQueryPath(node: SyntaxNode): string[] {
+        if (!node.firstChild) {
+            return []
+        }
+
         return this.getLSidePath(node.firstChild)
     }
 
     private getLSideItemName(node: SyntaxNode): string
     {
         if (node.type.id === Func) {
-            return this.readContents(node.firstChild) + "()";
+            return node.firstChild ? 
+                this.readContents(node.firstChild) + "()"
+                : "";
         }
 
         if (node.type.id === Id) {
