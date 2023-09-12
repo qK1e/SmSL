@@ -10,16 +10,33 @@ export default class ProgramNodeSource extends NodeSource {
     match(context: CompletionContext): boolean {
         const text = context.state.doc.toString().trim();
 
+        const symbolTable = this.getSymbolTable(context);
+        const top = Object.keys(symbolTable)[0];
+
+        if (!top) {
+            return false;
+        }
+
         return super.match(context) 
-            && ( text.length === 0 || 'clients'.startsWith(text))
+            && ( text.length === 0 || top.startsWith(text))
     }
 
     getCompletionResult(context: CompletionContext): CompletionResult {
+        const symbolTable = this.getSymbolTable(context);
+        const top = Object.keys(symbolTable)[0];
+
+        if (!top) {
+            return {
+                from: 0,
+                options: []
+            } ;
+        }
+
         const options = [
             {
-                label: 'clients', 
+                label: top, 
                 apply: ( view: EditorView, completion: Completion, from: number, to: number) => {
-                    const insertion = 'clients {\n\t\n}';
+                    const insertion = `${top} {\n\t\n}`;
 
                     const transactionSpec = insertCompletionText(view.state, insertion, 0, view.state.doc.length);
                     transactionSpec.selection = EditorSelection.cursor(insertion.indexOf('\t') + 1);

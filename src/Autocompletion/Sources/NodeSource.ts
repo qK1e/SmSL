@@ -21,4 +21,14 @@ export default abstract class NodeSource implements AutocompletionSourceInterfac
     protected resolveNode(context: CompletionContext): SyntaxNode {
         return context.state.tree.resolve(context.pos).node;
     }
+
+    protected getSymbolTable(context: CompletionContext): Object {
+        const table = context.state.languageDataAt("symbolTable", 0)[0];
+
+        if (!table || typeof table != "object") {
+            return {}
+        }
+
+        return table;
+    }
 }

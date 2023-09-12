@@ -1,15 +1,11 @@
-import NodeSource from "./NodeSource";
 import { CompletionContext, CompletionResult, Completion } from "@codemirror/autocomplete";
 import { SyntaxNode, TreeCursor } from '@lezer/common';
-import { Query, Func, Id, LSide } from "../../parser.terms";
+import NodeSource from "./NodeSource";
+import { Query, Id, Func } from "../../parser.terms";
 
-export default class IdNodeSource extends NodeSource {
-    protected nodeId: number = Id;
-    protected context: CompletionContext;
-
-    public match(context: CompletionContext): boolean {
-        return [Id, LSide].includes(this.resolveNode(context).type.id);
-    }
+export default class QueryNodeSource extends NodeSource {
+    protected nodeId: number = Query;
+    private context: CompletionContext
 
     public getCompletionResult(context: CompletionContext): CompletionResult {
         this.context = context;
@@ -47,23 +43,12 @@ export default class IdNodeSource extends NodeSource {
         let path: string[] = []
         let cursor: TreeCursor = node.cursor();
 
-        if (node.type.id === Id) {
-            cursor.parent()
-        }
-
-        if (cursor.node.type.id === LSide) {
-            path.push( ...this.getLSidePath(cursor.node) );
-        }
-
-        while(cursor.parent()) {
-            if (cursor.node.type.id === Query) {
-                path = this.getQueryPath(cursor.node).concat(path);
-            }
+        while(cursor.node.type.id === Query) {
+            path = this.getQueryPath(cursor.node).concat(path);
+            cursor.parent();
         }
 
         let tables: Object = this.getSymbolTable(context);
-
-        let unfinished: string = path.pop() || "";
 
         for (let id of path) {
             if (! tables.hasOwnProperty(id)) {
@@ -73,11 +58,7 @@ export default class IdNodeSource extends NodeSource {
             tables = tables[id];
         }
 
-        const candidates: string[] = Object.keys(tables);
-
-        return candidates.filter((candidate: string) => {
-            return candidate.startsWith(unfinished);
-        });
+        return Object.keys(tables);
     }
 
     private getLSidePath(node: SyntaxNode): string[] {
